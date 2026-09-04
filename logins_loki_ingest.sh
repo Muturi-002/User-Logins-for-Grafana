@@ -92,6 +92,8 @@ fi
 script_log_info "Current user running script '$0': $(whoami)"
 if id -nG $(whoami) | grep -qw sudo; then
         script_log_info "User '$(whoami)' has sudo privileges. Proceed with caution!!!"
+elif [ "$(whoami)" == "root" ]; then
+	script_log_info "Script running as root user. Execution of script done by cron job with root user as permitted user"
 else
         script_log_info "User does not have sudo privileges. Ensure user $(whoami) has these privileges or use another user with sudo privileges. Contact your admin for support and any enquiries on this script"
         exit 0
@@ -374,8 +376,8 @@ if id -nG $(whoami) | grep -qw sudo; then
        else
 	       sudo touch /etc/cron.d/collect-logins-loki
 	       # Run script after every 3 minutes
-	       echo "*/3 * * * * /bin/bash $pwd/$0" | sudo tee /etc/cron.d/collect-logins-loki >/dev/null
-	       chmod 700 /etc/cron.d/collect-logins-loki
+	       echo "*/3 * * * * root /bin/bash $(pwd)/$0" | sudo tee /etc/cron.d/collect-logins-loki >/dev/null
+	       sudo chmod 700 /etc/cron.d/collect-logins-loki
 	       script_log_success "Cron job for this script - $0 - set successfully"
 	       sudo systemctl daemon-reload
        fi
