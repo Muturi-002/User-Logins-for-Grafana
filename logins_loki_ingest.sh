@@ -295,11 +295,11 @@ compare_and_merge () {
                 sudo cat $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" >/dev/null 2>&1
                 script_log_success "'$LAST_LOGS_FILE' appended successfully."
         else
-                if diff -q $SSH_LOGS_FILE $TEMP_SSH_LOGS_FILE > /dev/null; then
+                if diff -q $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE > /dev/null; then
                         script_log_info "No changes on LAST logs"
                 else
                         grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$SSH_LAST_FILE" 2>/dev/null
-                        script_log_success "'$SSH_LAST_FILE' appended successfully."
+                        script_log_success "'$LAST_LOGS_FILE' appended successfully."
                 fi
         fi
 
@@ -325,11 +325,13 @@ compare_and_merge () {
 	 	if echo "$existing_keys" | grep -qxF "$key"; then
 			if [[ "$source" == "last" ]]; then
 				existing_line=$(grep "^${epoch} ${source} SUCCESS ${username}" "$SUPER_LOG_FILE" 2>/dev/null)
-				existing_message=$(echo "$existing_line" | cut -d' ' -f6-)
+				existing_message=$(echo "$existing_line" | cut -d' ' -f7-)
 				if [[ -n "$existing_line" && "$existing_message" != "$message" ]]; then
 					script_log_info "Updating changed 'last' record for $username (session $epoch details changed)"
 					sudo sed -i "\#^${epoch} ${source} SUCCESS ${username} #d" "$SUPER_LOG_FILE"
 					user_log_success "$epoch" "$source" "$username" "$message"
+				else
+					script_log_info "No existing sessions have been ended. All previously recorded sessions remain intact. Proceed to check other sources."
 				fi
 			fi
 			continue
@@ -337,10 +339,10 @@ compare_and_merge () {
 
                 if [[ "$source" == "lastb" ]]; then
                         user_log_fail "$epoch" "$source" "$username" "$message"
-		elif [[ "$source" == "usrchg" ]]; then
-			user_log_info "$epoch" "$source" "$username" "$message"
-		else
+		elif [[ "$source" == "last" ]]; then 
 			user_log_success "$epoch" "$source" "$username" "$message"
+		else 
+			user_log_info "$epoch" "$source" "$username" "$message"
 		fi
 
 	done
@@ -376,7 +378,7 @@ if id -nG $(whoami) | grep -qw sudo; then
        else
 	       sudo touch /etc/cron.d/collect-logins-loki
 	       # Run script after every 3 minutes
-	       echo "*/3 * * * * root /bin/bash $(pwd)/$0" | sudo tee /etc/cron.d/collect-logins-loki >/dev/null
+	       echo "*/5 * * * * root /bin/bash /home/ubuntu/grafana-user-logins/logins_loki_ingest.sh" | sudo tee /etc/cron.d/collect-logins-loki >/dev/null
 	       sudo chmod 700 /etc/cron.d/collect-logins-loki
 	       script_log_success "Cron job for this script - $0 - set successfully"
 	       sudo systemctl daemon-reload
