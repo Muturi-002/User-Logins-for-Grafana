@@ -317,7 +317,17 @@ compare_and_merge () {
                 fi
         fi
 	# =======================================================================================================================================
-        existing_keys=$(awk 'NF{print $1","$2}' "$SUPER_LOG_FILE" 2>/dev/null | sort -u)
+	 existing_keys=$(awk '{
+                epoch=""; source="";
+                for (i=1;i<=NF;i++) {
+                        split($i, kv, "=")
+                        if (kv[1]=="epoch") epoch=kv[2]
+                        if (kv[1]=="loginSource") source=kv[2]
+                }
+                if (epoch!="" && source!="") print epoch","source
+	        }' "$SUPER_LOG_FILE" 2>/dev/null | sort -u)
+		# The change in the key-value pair is as a result of the reformatted log output for Loki. Initial format (check previous commit hash) 
+		# resulted in duplication of existing logs.
        	cat "$SSH_LOGS_FILE" "$LAST_LOGS_FILE" "$USER_SWITCH_LOGS_FILE" 2>/dev/null | sort -k1,1n | awk '!seen[$1","$2]++' | while IFS=' ' read -r epoch source username message; do
 		[[ -z "$epoch" ]] && continue
        		key="$epoch,$source"
@@ -325,10 +335,10 @@ compare_and_merge () {
 	 	if echo "$existing_keys" | grep -qxF "$key"; then
 			if [[ "$source" == "last" ]]; then
 				existing_line=$(grep "^${epoch} ${source} SUCCESS ${username}" "$SUPER_LOG_FILE" 2>/dev/null)
-				existing_message=$(echo "$existing_line" | cut -d' ' -f7-)
+				existing_message=$(echo "$existing_line" | grep -oP 'systemMessage=\K.*') # 'grep -oP' eases capture of last fields, does not depend on the field's column position as compared to 'awk' and 'cut'
 				if [[ -n "$existing_line" && "$existing_message" != "$message" ]]; then
 					script_log_info "Updating changed 'last' record for $username (session $epoch details changed)"
-					sudo sed -i "\#^${epoch} ${source} SUCCESS ${username} #d" "$SUPER_LOG_FILE"
+					sudo sed -i "\#epoch=${epoch} loginSource=${source} loginLevel=SUCCESS user=${username} #d" "$SUPER_LOG_FILE"
 					user_log_success "$epoch" "$source" "$username" "$message"
 				else
 					script_log_info "No existing sessions have been ended. All previously recorded sessions remain intact. Proceed to check other sources."
