@@ -28,19 +28,19 @@ SCRIPT_RUN_FILE="$DIR/script_run.log"
 user_log_success () {
         local epoch="$1" source="$2" username="$3" message="$4"
         local human_ts=$(date -d "@$epoch" '+%Y-%m-%dT%H:%M:%S')
-        echo "epoch=$epoch loginSource=$source loginLevel=SUCCESS user=$username timestamp=$human_ts systemMessage=$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
+        printf 'epoch=%s loginSource=%s loginLevel=SUCCESS user=%s timestamp="%s" systemMessage="%s"\n' "$epoch" "$source" "$username" "$human_ts" "$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
 }
 # Record failed login attempts
 user_log_fail () {
         local epoch="$1" source="$2" username="$3" message="$4"
         local human_ts=$(date -d "@$epoch" '+%Y-%m-%dT%H:%M:%S')
-        echo "epoch=$epoch loginSource=$source loginLevel=FAIL user=$username timestamp=$human_ts systemMessage=$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
+        printf 'epoch=%s loginSource=%s loginLevel=FAIL user=%s timestamp="%s" systemMessage="%s"\n' "$epoch" "$source" "$username" "$human_ts" "$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
 }
 # Record only user change logs format
 user_log_info () {
 	local epoch="$1" source="$2" username="$3" message="$4"
 	local human_ts=$(date -d "@$epoch" '+%Y-%m-%dT%H:%M:%S')
-	echo "epoch=$epoch loginSource=$source loginLevel=INFO user=$username timestamp=$human_ts systemMessage=$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
+	printf 'epoch=%s loginSource=%s loginLevel=INFO user=%s timestamp="%s" systemMessage="%s"\n' "$epoch" "$source" "$username" "$human_ts" "$message" | sudo tee -a "$SUPER_LOG_FILE" > /dev/null
 }
 
 # ----- Run script logs ------
