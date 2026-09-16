@@ -28,7 +28,19 @@ The final file used for this project is the [Loki bash script](./logins_loki_ing
    - Check mainly on `last` logs, with its dynamic nature between active and terminated user sessions.
 
 ### Script output images
-*To be appended later*
+
+#### Grafana dashboard
+
+![Grafana dashboard](./Login_Grafana_Dashboard.png)
+
+#### Script execution logs
+
+![Script execution logs](./script_execution_logs(script_run.log).png)
+
+#### Server login records
+
+![Server login records](./server_logins(user-logins.log).png)
+
 
 ## Conclusion
 A Medium blog on this project will be published, highlighting challenges, thought process, and implementation of the project. This project was divided into 2 phases:
