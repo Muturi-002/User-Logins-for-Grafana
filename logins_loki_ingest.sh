@@ -298,10 +298,11 @@ compare_and_merge () {
                 if diff -q $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE > /dev/null; then
                         script_log_info "No changes on LAST logs"
                 else
-                        grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$SSH_LAST_FILE" 2>/dev/null
+                        grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
                         script_log_success "'$LAST_LOGS_FILE' appended successfully."
                 fi
         fi
+
 
 	# -----Compare and update USER SWITCH logs-----
 	if [ $(wc -l < $USER_SWITCH_LOGS_FILE) -eq 0 ]; then
@@ -340,8 +341,6 @@ compare_and_merge () {
 					script_log_info "Updating changed 'last' record for $username (session $epoch details changed)"
 					sudo sed -i "\#epoch=${epoch} loginSource=${source} loginLevel=SUCCESS user=${username} #d" "$SUPER_LOG_FILE"
 					user_log_success "$epoch" "$source" "$username" "$message"
-				else
-					script_log_info "No existing sessions have been ended. All previously recorded sessions remain intact. Proceed to check other sources."
 				fi
 			fi
 			continue
