@@ -2,7 +2,6 @@
 
 
 # Script is running on an Ubuntu instance. Currently, no other Linux distro(RHEL, OpenSuse OSs) are considered
-#
 
 # =========================================================================================================================
 # ---- Setting up base files ---
@@ -197,6 +196,7 @@ collect_ssh_logs () {
                 is_group_member "$username" || continue
                 echo "$epoch ssh $username $line" | sudo tee -a "$TEMP_SSH_LOGS_FILE" > /dev/null
         done
+	script_log_success "Logs from source 'ssh' collected successfully."
 
 }
 
@@ -219,6 +219,7 @@ collect_last_logs () {
                 [[ -z "$epoch" ]] && continue
                 echo "$epoch last $username $line" | sudo tee -a "$TEMP_LAST_LOGS_FILE" > /dev/null
         done
+	script_log_success "Logs from source 'last' collected successfully."
  
         sudo lastb -Ff /var/log/btmp 2>/dev/null | grep -E "^(${user})[[:space:]]" | while IFS= read -r line; do
                 username=$(echo "$line" | awk '{print $1}')
@@ -228,6 +229,7 @@ collect_last_logs () {
                 [[ -z "$epoch" ]] && continue
                 echo "$epoch lastb $username $line" | sudo tee -a "$TEMP_LAST_LOGS_FILE" > /dev/null
         done
+	script_log_success "Logs from source 'last' collected successfully."
 }
 
 collect_user_changes_logs () {
@@ -269,6 +271,8 @@ collect_user_changes_logs () {
                 is_group_member "$username" || continue
                 echo "$epoch usrchg $username $line" | sudo tee -a "$TEMP_USER_SWITCH_LOGS_FILE" > /dev/null
         done
+	script_log_success "Logs from source 'usrchg' collected successfully."
+
 }
 
 compare_and_merge () {
@@ -285,7 +289,6 @@ compare_and_merge () {
 			script_log_info "No changes on SSH logs"
 		else
 			grep -Fvxf $SSH_LOGS_FILE $TEMP_SSH_LOGS_FILE | sudo tee -a "$SSH_LOGS_FILE" 2>/dev/null
-			script_log_success "'$SSH_LOGS_FILE' appended successfully."
 		fi
 	fi
 
@@ -299,7 +302,6 @@ compare_and_merge () {
                         script_log_info "No changes on LAST logs"
                 else
                         grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
-                        script_log_success "'$LAST_LOGS_FILE' appended successfully."
                 fi
         fi
 
@@ -314,7 +316,6 @@ compare_and_merge () {
                         script_log_info "No changes on user switch logs"
                 else
                         grep -Fvxf $USER_SWITCH_LOGS_FILE $TEMP_USER_SWITCH_LOGS_FILE | sudo tee -a "$USER_SWITCH_LOGS_FILE" 2>/dev/null
-                        script_log_success "'$USER_SWITCH_LOGS_FILE' appended successfully."
                 fi
         fi
 	# =======================================================================================================================================
