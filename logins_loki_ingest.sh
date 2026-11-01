@@ -285,6 +285,7 @@ compare_and_merge () {
 		sudo cat $TEMP_SSH_LOGS_FILE | sudo tee -a "$SSH_LOGS_FILE" >/dev/null 2>&1
 		script_log_success "'$SSH_LOGS_FILE' appended successfully."
 	else
+<<<<<<< HEAD
 		new_ssh_logs=$(grep -v -E -f <(grep -o '^[0-9]\+' "$SSH_LOGS_FILE" | sed 's/^/^/') "$TEMP_SSH_LOGS_FILE")
 
                 if [[ -n "$new_ssh_logs" ]]; then
@@ -295,6 +296,16 @@ compare_and_merge () {
                     script_log_info "No changes on ssh logs."
                 fi
 
+=======
+		SSH_LAST_EPOCH=$(tail -1 "$SSH_LOGS_FILE" | awk '{print $1}')
+		SSH_LOG_EPOCH_TEMP=$(tail -1 "$TEMP_SSH_LOGS_FILE" | awk '{print $1}')
+		if [[ "$SSH_LAST_EPOCH" == "$SSH_LOG_EPOCH_TEMP" ]] ; then
+			script_log_info "No changes on SSH logs"
+		else
+			grep -Fvxf $SSH_LOGS_FILE $TEMP_SSH_LOGS_FILE | sudo tee -a "$SSH_LOGS_FILE" 2>/dev/null
+			script_log_info "New ssh logs appended successfully"
+		fi
+>>>>>>> refs/remotes/origin/main
 	fi
 
 	# -----Compare and update LAST logs -----
