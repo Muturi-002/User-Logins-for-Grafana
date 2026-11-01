@@ -303,11 +303,37 @@ compare_and_merge () {
                 sudo cat $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" >/dev/null 2>&1
                 script_log_success "'$LAST_LOGS_FILE' appended successfully."
         else
-                if diff -q $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE > /dev/null; then
-                        script_log_info "No changes on LAST logs"
-                else
-                        grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
-                fi
+		# Appending new last/lastb logs whose epochs do not exist in destination file (user-last-logs.log).
+		new_logs=$(grep -v -E -f <(grep -o '^[0-9]\+' "$LAST_LOGS_FILE" | sed 's/^/^/') "$TEMP_LAST_LOGS_FILE")
+
+		# Track if any changes (new or closed sessions) occur
+		changes_detected=false
+
+		if [[ -n "$new_logs" ]]; then
+		    script_log_success "New last/lastb logs detected."
+		    echo "$new_logs" | sudo tee -a "$LAST_LOGS_FILE" >/dev/null
+		    changes_detected=true
+		fi
+
+		# Aactive sessions ("still logged in") in the destination, check for updates in temp, and sync them
+		while read -r epoch; do
+		    if [[ -n "$epoch" ]]; then
+		        # Find the terminated/closed version of this epoch in the temporary file
+		       	terminated_line=$(grep "^$epoch" "$TEMP_LAST_LOGS_FILE" | grep -v "still logged in" | head -n 1)
+
+		        if [[ -n "$terminated_line" ]]; then
+		            # Append the terminated record ONLY if it doesn't already exist in the destination file
+		            if ! grep -qF "$terminated_line" "$LAST_LOGS_FILE"; then
+				    script_log_success "Session of existing epoch '$epoch' found to have ended."
+				    echo "$terminated_line" | sudo tee -a "$LAST_LOGS_FILE" >/dev/null
+		            fi
+		        fi
+		    fi
+		done < <(grep "still logged in" "$LAST_LOGS_FILE" | cut -d' ' -f1)
+
+		if [[ "$changes_detected" == false ]]; then
+			script_log_info "No changes in last/lastb logs."
+		fi
         fi
 
 
@@ -317,11 +343,15 @@ compare_and_merge () {
                 sudo cat $TEMP_USER_SWITCH_LOGS_FILE | sudo tee -a "$USER_SWITCH_LOGS_FILE" >/dev/null 2&>1
                 script_log_success "'$USER_SWITCH_LOGS_FILE' appended successfully."
         else
-		if diff -q $USER_SWITCH_LOGS_FILE $TEMP_USER_SWITCH_LOGS_FILE > /dev/null; then
-                        script_log_info "No changes on user switch logs"
-                else
-                        grep -Fvxf $USER_SWITCH_LOGS_FILE $TEMP_USER_SWITCH_LOGS_FILE | sudo tee -a "$USER_SWITCH_LOGS_FILE" 2>/dev/null
-                fi
+		new_usrchg_logs=$(grep -v -E -f <(grep -o '^[0-9]\+' "$USER_SWITCH_LOGS_FILE" | sed 's/^/^/') "$TEMP_USER_SWITCH_LOGS_FILE")
+
+		if [[ -n "$new_usrchg_logs" ]]; then
+		    script_log_success "New usrchg log epochs detected."
+		    echo "$new_usrchg_logs" | sudo tee -a "$USER_SWITCH_LOGS_FILE" >/dev/null
+		    script_log_info "New usrchg logs appended successfully."
+		else
+		    script_log_info "No changes on usrchg logs."
+		fi
         fi
 	# =======================================================================================================================================
 	 existing_keys=$(awk '{
