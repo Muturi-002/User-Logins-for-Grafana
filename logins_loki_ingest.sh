@@ -285,10 +285,13 @@ compare_and_merge () {
 		sudo cat $TEMP_SSH_LOGS_FILE | sudo tee -a "$SSH_LOGS_FILE" >/dev/null 2>&1
 		script_log_success "'$SSH_LOGS_FILE' appended successfully."
 	else
-		if diff -q $SSH_LOGS_FILE $TEMP_SSH_LOGS_FILE > /dev/null; then
+		SSH_LAST_EPOCH=$(tail -1 "$SSH_LOGS_FILE" | awk '{print $1}')
+		SSH_LOG_EPOCH_TEMP=$(tail -1 "$TEMP_SSH_LOGS_FILE" | awk '{print $1}')
+		if [[ "$SSH_LAST_EPOCH" == "$SSH_LOG_EPOCH_TEMP" ]] ; then
 			script_log_info "No changes on SSH logs"
 		else
 			grep -Fvxf $SSH_LOGS_FILE $TEMP_SSH_LOGS_FILE | sudo tee -a "$SSH_LOGS_FILE" 2>/dev/null
+			script_log_info "New ssh logs appended successfully"
 		fi
 	fi
 
@@ -298,11 +301,84 @@ compare_and_merge () {
                 sudo cat $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" >/dev/null 2>&1
                 script_log_success "'$LAST_LOGS_FILE' appended successfully."
         else
-                if diff -q $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE > /dev/null; then
-                        script_log_info "No changes on LAST logs"
-                else
-                        grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
-                fi
+#		LAST_LOGS_EPOCH=$(tail -1 "$LAST_LOGS_FILE" | awk '{print $1}')
+#		LAST_LOGS_EPOCH_TEMP=$(tail -1 "$TEMP_LAST_LOGS_FILE" | awk '{print $1}')
+#		mapfile -t LAST_LOGS_TWO_EPOCH < <(tail -2 "$LAST_LOGS_FILE" | awk '{print $1}')
+#                mapfile -t LAST_LOGS_TWO_EPOCH_TEMP < <(tail -2 "$TEMP_LAST_LOGS_FILE" | awk '{print $1}')
+
+		# Taking the last two log lines from each file
+#		if [[ "${LAST_LOGS_TWO[0]}" == "${LAST_LOGS_TWO_TEMP[0]}" && "${LAST_LOGS_TWO[1]}" == "${LAST_LOGS_TWO_TEMP[1]}" ]]; then
+#			script_log_info "No changes on last/lastb logs."
+#
+#		elif [[ "${LAST_LOGS_TWO[0]}" != "${LAST_LOGS_TWO_TEMP[0]}" ]]; then
+#			EPOCH_LAST_0=$(awk '{print $1}' <<< "${LAST_LOGS_TWO[0]}")
+#			if  [[ "$EPOCH_LAST_0" == "$LAST_LOGS_EPOCH" && "$EPOCH_LAST_0"  == "$LAST_LOGS_EPOCH_TEMP" ]]; then
+#       			       script_log_info "Log changes from 'last' source detected. Log record: ${LAST_LOGS_TWO[0]}. New related record to be appended."
+#			fi
+#
+#		elif [[ "${LAST_LOGS_TWO[1]}" != "${LAST_LOGS_TWO_TEMP[1]}" ]]; then
+#			EPOCH_LAST_1=$(awk '{print $1}' <<< "${LAST_LOGS_TWO[1]}")
+#                        if [[ "$EPOCH_LAST_1"  == "$LAST_LOGS_EPOCH" && "$EPOCH_LAST_1" == "$LAST_LOGS_EPOCH_TEMP" ]]; then
+#                               script_log_info "Log changes from 'last' source detected. Log record: ${LAST_LOGS_TWO[1]}. New related record to be appended."
+#                        fi
+#
+#		else
+#			grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
+#			script_log_info "New last/lastb logs appended successfully"
+#                fi
+#                if [[ "${LAST_LOGS_TWO_EPOCH[0]}" == "${LAST_LOGS_TWO_EPOCH_TEMP[0]}" && "${LAST_LOGS_TWO_EPOCH[1]}" == "${LAST_LOGS_TWO_EPOCH_TEMP[1]}" ]]; then
+#                        script_log_info "No changes on last/lastb logs."
+#		elif [[ "${LAST_LOGS_TWO_EPOCH[0]}" == "${LAST_LOGS_TWO_EPOCH_TEMP[0]}" ]]; then
+			# Check whether existing last log record '0' has changed i.e., "still logged in" -> "<timestamp>
+#			if [[ "$(cat "$LAST_LOGS_FILE" | grep "${LAST_LOGS_TWO_EPOCH[0]}" | grep "still logged in")" == "$(cat "$TEMP_LAST_LOGS_FILE" | grep "${LAST_LOGS_TWO_EPOCH_TEMP[0]}" | grep "still logged in")" ]]; then
+#				script_log_info "No change recorded for log record epoch ${LAST_LOGS_TWO_EPOCH[0]}."
+#			else
+#				script_log_info "Updated last record for epoch ${LAST_LOGS_TWO_EPOCH[0]} detected."
+#				grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | grep "${LAST_LOGS_TWO_EPOCH[0]}" | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
+#			fi
+#		elif [[ "${LAST_LOGS_TWO_EPOCH[1]}" == "${LAST_LOGS_TWO_EPOCH_TEMP[1]}" ]]; then
+#                        # Check whether existing last log record '1' has changed i.e., "still logged in" -> "<timestamp>
+#                        if [[ "$(cat "$LAST_LOGS_FILE" | grep "${LAST_LOGS_TWO_EPOCH[1]}" | grep "still logged in")" == "$(cat "$TEMP_LAST_LOGS_FILE" | grep "${LAST_LOGS_TWO_EPOCH_TEMP[1]}" | grep "still logged in")" ]]; then
+#                                script_log_info "No change recorded for log record epoch ${LAST_LOGS_TWO_EPOCH[1]}."
+#                        else
+#                                script_log_info "Updated last record for epoch ${LAST_LOGS_TWO_EPOCH[1]} detected."
+#                                grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | grep "${LAST_LOGS_TWO_EPOCH[1]}" | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
+#                        fi
+#		else
+#			grep -Fvxf $LAST_LOGS_FILE $TEMP_LAST_LOGS_FILE | sudo tee -a "$LAST_LOGS_FILE" 2>/dev/null
+#			script_log_info "New last/lastb logs appended successfully"
+#		fi
+		# Appending new last/lastb logs whose epochs do not exist in destination file (user-last-logs.log).
+		new_logs=$(grep -v -E -f <(grep -o '^[0-9]\+' "$LAST_LOGS_FILE" | sed 's/^/^/') "$TEMP_LAST_LOGS_FILE")
+
+		# Track if any changes (new or closed sessions) occur
+		changes_detected=false
+
+		if [[ -n "$new_logs" ]]; then
+		    script_log_success "New last/lastb logs detected."
+		    echo "$new_logs" | sudo tee -a "$LAST_LOGS_FILE" >/dev/null
+		    changes_detected=true
+		fi
+
+		# Aactive sessions ("still logged in") in the destination, check for updates in temp, and sync them
+		while read -r epoch; do
+		    if [[ -n "$epoch" ]]; then
+		        # Find the terminated/closed version of this epoch in the temporary file
+		       	terminated_line=$(grep "^$epoch" "$TEMP_LAST_LOGS_FILE" | grep -v "still logged in" | head -n 1)
+			
+		        if [[ -n "$terminated_line" ]]; then
+		            # Append the terminated record ONLY if it doesn't already exist in the destination file
+		            if ! grep -qF "$terminated_line" "$LAST_LOGS_FILE"; then
+				    script_log_success "Session of existing epoch '$epoch' found to have ended."
+				    echo "$terminated_line" | sudo tee -a "$LAST_LOGS_FILE" >/dev/null
+		            fi
+		        fi
+		    fi
+		done < <(grep "still logged in" "$LAST_LOGS_FILE" | cut -d' ' -f1)
+
+		if [[ "$changes_detected" == false ]]; then
+			script_log_info "No changes in last/lastb logs."
+		fi
         fi
 
 
@@ -312,11 +388,15 @@ compare_and_merge () {
                 sudo cat $TEMP_USER_SWITCH_LOGS_FILE | sudo tee -a "$USER_SWITCH_LOGS_FILE" >/dev/null 2&>1
                 script_log_success "'$USER_SWITCH_LOGS_FILE' appended successfully."
         else
-		if diff -q $USER_SWITCH_LOGS_FILE $TEMP_USER_SWITCH_LOGS_FILE > /dev/null; then
-                        script_log_info "No changes on user switch logs"
-                else
-                        grep -Fvxf $USER_SWITCH_LOGS_FILE $TEMP_USER_SWITCH_LOGS_FILE | sudo tee -a "$USER_SWITCH_LOGS_FILE" 2>/dev/null
-                fi
+		new_usrchg_logs=$(grep -v -E -f <(grep -o '^[0-9]\+' "$USER_SWITCH_LOGS_FILE" | sed 's/^/^/') "$TEMP_USER_SWITCH_LOGS_FILE")
+
+		if [[ -n "$new_usrchg_logs" ]]; then
+		    script_log_success "New usrchg log epochs detected."
+		    echo "$new_usrchg_logs" | sudo tee -a "$USER_SWITCH_LOGS_FILE" >/dev/null
+		    script_log_info "New usrchg logs appended successfully."
+		else
+		    script_log_info "No changes on usrchg logs."
+		fi	
         fi
 	# =======================================================================================================================================
 	 existing_keys=$(awk '{
