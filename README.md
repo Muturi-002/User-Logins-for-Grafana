@@ -1,18 +1,22 @@
 # User Logins For Grafana Visualization
 
-This project is designed to visualize Grafana user logins using the `journalctl` and `last`/`lastb` commands. This project is a prerequisite in completing the **Grafana Emerging Champions Cohort 2** program, though a hands-on technical project was just one of the options provided.
+This project is designed to visualize Grafana user logins using the `journalctl` and `last`/`lastb` commands. This project is a prerequisite in completing the **Grafana Emerging Champions Cohort 2** / **Grafana Emerging Champions 2026** program, though a hands-on technical project was just one of the options provided.
 
 ## Project Structure
 
 ```bash
-
-├── logins.sh
+├── Login_Grafana_Dashboard.png
 ├── logins_loki_ingest.sh
-└── logins_v2.sh
-
+├── logins_v2.sh
+├── README.md
+├── script_execution_logs(script_run.log).png
+└── server_logins(user-logins.log).png
 ```
 
-The final file used for this project is the [Loki bash script](./logins_loki_ingest.sh), which is formatted for the log ingestion by Loki and visualization using Grafana. The other login scripts, `logins.sh` and `logins_v2.sh` were used for testing on the server. The [first file](./logins.sh) proved to be too confusing to follow up and make the desired changes (Git was yet to be initialized in the working repo, hence two files).
+
+* [logins_v2.sh](./logins_v2.sh)- logs collected on the server. No ingestion by log collectors. File acted as a test run for the main file.
+   - *Second iteration of a trial file. Check this [commit](https://github.com/Muturi-002/User-Logins-for-Grafana/commit/656d14c89a52215dbac85f9c7ad4066ae0127e7c) for reference.*
+* [logins_loki_ingest.sh](./logins_loki_ingest.sh)- logs ingested by Alloy for visualization.
 
 ## Scripting
 1. All custom variables are declared at the start of the script.
@@ -46,5 +50,6 @@ The final file used for this project is the [Loki bash script](./logins_loki_ing
 A Medium blog on this project will be published, highlighting challenges, thought process, and implementation of the project. This project was divided into 2 phases:
   - Scripting
   - Grafana visualization.
+***<u>Pending. Work in progress</u>***
 
-[User Logins Grafana Visualization article]()
+      [User Logins Grafana Visualization article]()
