@@ -12,6 +12,10 @@ SSH_LOGS_FILE="$DIR/user-ssh-logs.log"
 LAST_LOGS_FILE="$DIR/user-last-logs.log"
 USER_SWITCH_LOGS_FILE="$DIR/user-chg-logs.log"
 
+
+# --- Archiving logs ---
+ARCH_DIR="$DIR/grafana-loggers-archive"
+
 # --- Setting up temporary files for log comparison and ammendment ---
 TEMP_LOG_DIR="/tmp/temp-grafana-loggers-loki"
 TEMP_LOG_FILE="$TEMP_LOG_DIR/tmp-grafana-"$(basename $SUPER_LOG_FILE)""
@@ -410,8 +414,29 @@ script_run () {
 	clean_up_temp_files
 }
 
-# Run program
-script_run
+logs_archive () {
+	# Setup log archiving destination directory within directory. Will also clear all logs from the files ( a clean slate ) after successful archive
+	if [[ -d $ARCH_DIR ]]; then
+		MAX_LOG_DIR_SIZE_MB=100M # Size threshold
+		script_log_info "Checking memory of directory..."
+		CURRENT_DIR_SIZE=$(sudo du -h | awk '{print $1}')
+		if [[ "$CURRENT_DIR_SIZE" == "$MAX_LOG_DIR_SIZE_MB" ]]; then
+			script_log_info "Archiving and clearing log directory..."
+			ARCHIVE_TIMESTAMP=$(date '+%Y%m%d_$H$M$S')
+			ARCHIVE_FILE="$ARCH_DIR/server_loggers_$ARCHIVE_TIMESTAMP.tar"
+			sudo tar -cf "$ARCHIVE_FILE" "$DIR/*log"
+			# Compression using gzip
+			sudo gzip $ARCHIVE_FILE
+
+			sudo truncate -s 0 "$DIR/*log"
+		else
+			script_log_info "Directory $(basename $DIR)'s size still within threshold."
+		fi
+	else
+		sudo mkdir "$ARCH_DIR"
+		logs_archive
+	fi
+}
 
 # Set cron job for script execution
 if id -nG $(whoami) | grep -qw sudo; then
@@ -432,8 +457,10 @@ else
         script_log_info "User does not have sudo privileges. Cannot set up this script's cron job."
 fi
 
-
-# Denote time of end script execution
-script_log_info "Script run successfully. End time: $(date '+%Y-%m-%d %H:%M:%S')"
+# Run log operations
+script_run 
+# Denote time of end log operations' execution
+script_log_info "Log operations done successfully. End time: $(date '+%Y-%m-%d %H:%M:%S'). Assessing possible archive..."
+logs_archive
 exit
 
